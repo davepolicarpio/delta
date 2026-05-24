@@ -87,6 +87,7 @@ def inject_luxury_system_css():
                 border: 1px solid #E0E0E0 !important;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
                 min-height: 80vh;
+                margin-bottom: 20px;
             }
             
             /* Strict Centering System for Landing View */
@@ -582,57 +583,70 @@ def render_delta_contracts_view():
     # 4-Column "Draftable Style" Split View Layout Orchestration
     v_col1, v_col2, v_col3, v_col4 = st.columns([4, 0.5, 4, 3.5])
 
-    # Left Document continuous sheet viewport execution container
+    # ---------------------------------------------------------
+    # LEFT DOCUMENT - HTML PAYLOAD ACCUMULATION
+    # ---------------------------------------------------------
     with v_col1:
-        st.markdown('<div class="document-sheet">', unsafe_allow_html=True)
+        left_html = '<div class="document-sheet">'
         for idx, (tag, i1, _, j1, _) in enumerate(alignment_opcodes):
-            st.markdown(f'<div id="left_block_{idx}" style="margin-bottom: 24px;">', unsafe_allow_html=True)
+            left_html += f'<div id="left_block_{idx}" style="margin-bottom: 24px;">'
             if tag == 'equal':
-                st.markdown(f'<p class="stream-paragraph">{left_paras[i1]}</p>', unsafe_allow_html=True)
+                left_html += f'<p class="stream-paragraph">{left_paras[i1]}</p>'
             elif tag == 'replace':
                 h1, _ = compute_token_diff_html(left_paras[i1], right_paras[j1])
-                st.markdown(f'<p class="stream-paragraph"><span class="trace-flag">▲ Modified</span>{h1}</p>', unsafe_allow_html=True)
+                left_html += f'<p class="stream-paragraph"><span class="trace-flag">▲ Modified</span>{h1}</p>'
             elif tag == 'delete':
-                st.markdown(f'<p class="stream-paragraph"><span class="trace-flag" style="color:#991B1B;">◼ Omitted</span><span class="del-token">{left_paras[i1]}</span></p>', unsafe_allow_html=True)
+                left_html += f'<p class="stream-paragraph"><span class="trace-flag" style="color:#991B1B;">◼ Omitted</span><span class="del-token">{left_paras[i1]}</span></p>'
             elif tag == 'insert':
-                # Empty white placeholder block to maintain strict horizontal axis alignment
-                st.markdown('<div style="visibility: hidden; min-height: 20px;">[Placeholder]</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+                left_html += '<div style="visibility: hidden; min-height: 20px;">[Placeholder]</div>'
+            left_html += '</div>'
+        left_html += '</div>'
+        
+        # Render the fully sealed HTML block at once
+        st.markdown(left_html, unsafe_allow_html=True)
 
-    # Central structural Timeline Mini-Map layout track column
+    # ---------------------------------------------------------
+    # CENTRAL MINI-MAP - HTML PAYLOAD ACCUMULATION
+    # ---------------------------------------------------------
     with v_col2:
-        st.markdown('<div style="padding-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: start; height: 100%;">', unsafe_allow_html=True)
+        map_html = '<div style="padding-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: start; height: 100%;">'
         for tag, _, _, _, _ in alignment_opcodes:
             if tag == 'equal':
-                st.markdown('<div class="minimap-bar minimap-equal"></div>', unsafe_allow_html=True)
+                map_html += '<div class="minimap-bar minimap-equal"></div>'
             elif tag == 'replace':
-                st.markdown('<div class="minimap-bar minimap-replace"></div>', unsafe_allow_html=True)
+                map_html += '<div class="minimap-bar minimap-replace"></div>'
             elif tag == 'delete':
-                st.markdown('<div class="minimap-bar minimap-delete"></div>', unsafe_allow_html=True)
+                map_html += '<div class="minimap-bar minimap-delete"></div>'
             elif tag == 'insert':
-                st.markdown('<div class="minimap-bar minimap-insert"></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+                map_html += '<div class="minimap-bar minimap-insert"></div>'
+        map_html += '</div>'
+        
+        st.markdown(map_html, unsafe_allow_html=True)
 
-    # Right Document continuous sheet viewport execution container
+    # ---------------------------------------------------------
+    # RIGHT DOCUMENT - HTML PAYLOAD ACCUMULATION
+    # ---------------------------------------------------------
     with v_col3:
-        st.markdown('<div class="document-sheet">', unsafe_allow_html=True)
+        right_html = '<div class="document-sheet">'
         for idx, (tag, i1, _, j1, _) in enumerate(alignment_opcodes):
-            st.markdown(f'<div id="right_block_{idx}" style="margin-bottom: 24px;">', unsafe_allow_html=True)
+            right_html += f'<div id="right_block_{idx}" style="margin-bottom: 24px;">'
             if tag == 'equal':
-                st.markdown(f'<p class="stream-paragraph">{right_paras[j1]}</p>', unsafe_allow_html=True)
+                right_html += f'<p class="stream-paragraph">{right_paras[j1]}</p>'
             elif tag == 'replace':
                 _, h2 = compute_token_diff_html(left_paras[i1], right_paras[j1])
-                st.markdown(f'<p class="stream-paragraph"><span class="trace-flag">▲ Modified</span>{h2}</p>', unsafe_allow_html=True)
+                right_html += f'<p class="stream-paragraph"><span class="trace-flag">▲ Modified</span>{h2}</p>'
             elif tag == 'delete':
-                # Empty white placeholder block to maintain strict horizontal axis alignment
-                st.markdown('<div style="visibility: hidden; min-height: 20px;">[Placeholder]</div>', unsafe_allow_html=True)
+                right_html += '<div style="visibility: hidden; min-height: 20px;">[Placeholder]</div>'
             elif tag == 'insert':
-                st.markdown(f'<p class="stream-paragraph"><span class="trace-flag" style="color:#065F46;">◆ Insertion</span><span class="add-token">{right_paras[j1]}</span></p>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+                right_html += f'<p class="stream-paragraph"><span class="trace-flag" style="color:#065F46;">◆ Insertion</span><span class="add-token">{right_paras[j1]}</span></p>'
+            right_html += '</div>'
+        right_html += '</div>'
+        
+        st.markdown(right_html, unsafe_allow_html=True)
 
-    # Far-Right Clean Executive Change List Sidebar and Action Matrix Pipeline
+    # ---------------------------------------------------------
+    # FAR-RIGHT SIDEBAR (Safe to use Streamlit Native logic here)
+    # ---------------------------------------------------------
     with v_col4:
         st.markdown("<p style='font-size:11px; text-transform:uppercase; color:#737373; font-weight:600; margin-bottom:15px; padding-left:5px;'>SMART DELTA EVALUATION</p>", unsafe_allow_html=True)
         
