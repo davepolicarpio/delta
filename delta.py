@@ -1,143 +1,179 @@
 # ==========================================
-# DELTA | PREMIUM CONTRACT REVIEWER PLATFORM
+# DELTA | LUXURY LEGAL-TECH SYSTEM ARCHITECTURE
 # ==========================================
-# Dependencies: pip install streamlit pymupdf python-docx
 
 import streamlit as st
 import difflib
 import io
+import re
 import fitz  # PyMuPDF
 from docx import Document
 
 # ==========================================
 # BLOCK 1: SESSION STATE INITIALIZATION
 # ==========================================
-# [DIRECTIVE: Explicitly declare all session state keys before any UI renders.]
-# [DIRECTIVE: This prevents key errors during Streamlit's reactive reruns.]
+# [DIRECTIVE: Strict initialization of processing array arrays and states.]
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
-    st.session_state.uploaded_files_data = {}  # Stores raw text mapped by filename
-    st.session_state.file_order = []           # Tracks the manually sorted sequence of files
-    st.session_state.file_roles = {}           # Maps filename -> Dropdown Role (Template, v1, etc.)
-    st.session_state.processing_complete = False # Toggles the Phase 2 Dashboard view
-    st.session_state.current_baseline = 0      # Timeline index for Col 1
-    st.session_state.current_counter = 1       # Timeline index for Col 2
-    st.session_state.peek_template = False     # Toggles Phase 3 Sidebar
+    st.session_state.uploaded_files_data = {}  
+    st.session_state.file_order = []           
+    st.session_state.file_roles = {}           
+    st.session_state.processing_complete = False 
+    st.session_state.current_baseline = 0      
+    st.session_state.current_counter = 1       
+    st.session_state.peek_template = False     
 
 # ==========================================
-# BLOCK 2: LUXURY BRAND CSS INJECTION
+# BLOCK 2: PREMIUM HIGH-END DARK CSS INJECTION
 # ==========================================
-# [DIRECTIVE: Inject custom HTML/CSS to override Streamlit's default theme.]
-# [DIRECTIVE: Enforce Navy Blue (#0a192f), Charcoal (#1e293b), Crisp White, and Gold (#d4af37).]
-def inject_custom_css():
+# [DIRECTIVE: Force complete dark mode grayscale aesthetic with gold accents and elegant typography rules.]
+def inject_premium_luxury_css():
     st.markdown("""
         <style>
-            /* Global Backgrounds: Deep Navy Blue */
+            @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+            
+            /* Enforce Global Dark Grayscale Canvas */
             .stApp {
-                background-color: #0a192f;
-                color: #e2e8f0;
-                font-family: 'Helvetica Neue', sans-serif;
+                background-color: #121212 !important;
+                color: #e5e5e5 !important;
+                font-family: 'Inter', sans-serif !important;
             }
-            /* Sidebar Background: Dark Charcoal Gray */
+            
+            /* Sidebar Restyling */
             [data-testid="stSidebar"] {
-                background-color: #1e293b;
+                background-color: #161616 !important;
+                border-right: 1px solid #262626;
             }
-            /* Headers and Titles */
-            h1, h2, h3 {
-                color: #d4af37 !important; /* Metallic Gold Accent */
+            
+            /* Luxury Headers */
+            h1, h2, .luxury-header {
+                font-family: 'Cinzel', serif !important;
+                color: #d4af37 !important; /* Premium Metallic Gold */
+                letter-spacing: 2px;
+                font-weight: 400;
+                margin-bottom: 0.5rem;
             }
-            /* Primary Action Buttons */
+            h3, h4 {
+                font-family: 'Inter', sans-serif !important;
+                color: #ffffff !important;
+                font-weight: 500;
+                letter-spacing: 0.5px;
+            }
+            
+            /* Minimal Buttons styling */
             .stButton > button {
-                background-color: #d4af37 !important;
-                color: #0a192f !important;
-                font-weight: bold !important;
-                border: none !important;
-                border-radius: 4px;
-                transition: all 0.3s ease;
+                background-color: transparent !important;
+                color: #d4af37 !important;
+                border: 1px solid #d4af37 !important;
+                border-radius: 0px !important; /* Sharp technical edges */
+                font-family: 'Inter', sans-serif;
+                font-size: 13px !important;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                padding: 0.5rem 1.5rem !important;
+                transition: all 0.4s ease;
             }
             .stButton > button:hover {
-                background-color: #fcd34d !important;
-                transform: scale(1.02);
+                background-color: #d4af37 !important;
+                color: #121212 !important;
+                box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
             }
-            /* Document Text Containers: Crisp White for Readability */
-            .doc-container {
-                background-color: #ffffff;
-                color: #0f172a;
-                padding: 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                margin-bottom: 1rem;
-                position: relative;
+            
+            /* Document Page Simulation (Continuous Text Sheet) */
+            .document-canvas {
+                background-color: #1c1c1c;
+                color: #ffffff;
+                padding: 2.5rem;
+                border: 1px solid #262626;
+                min-height: 700px;
                 font-size: 14px;
-                line-height: 1.6;
+                line-height: 1.8;
+                letter-spacing: 0.3px;
+                white-space: pre-wrap;
             }
-            /* The Edit Count Badge: Gold Accent */
-            .delta-badge {
-                position: absolute;
-                top: -10px;
-                right: -10px;
-                background-color: #d4af37;
-                color: #0a192f;
-                padding: 4px 10px;
-                border-radius: 12px;
-                font-size: 0.75rem;
-                font-weight: bold;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            
+            /* Inline Paragraph Container Block mapping to continuous view */
+            .para-block {
+                position: relative;
+                margin-bottom: 1.5rem;
+                padding-right: 2rem;
             }
-            /* Highlights inside the white container */
-            .highlight-add {
-                background-color: #dcfce7; /* Pastel Green */
-                color: #166534;
-                padding: 2px 4px;
-                border-radius: 3px;
+            
+            /* Micro Structural Badges */
+            .structural-indicator {
+                color: #d4af37;
+                font-size: 11px;
+                font-family: 'Cinzel', serif;
+                text-transform: uppercase;
+                margin-bottom: 0.25rem;
+                display: block;
+                letter-spacing: 1px;
             }
-            .highlight-del {
-                background-color: #fee2e2; /* Pastel Red */
-                color: #991b1b;
+            
+            /* High Contrast Diff Highlighting inside dark sheets */
+            .add-segment {
+                background-color: #14321a !important; /* Deep Forest Green Accent */
+                color: #a7f3d0 !important;
+                padding: 1px 3px;
+                border-bottom: 1px solid #34d399;
+            }
+            .del-segment {
+                background-color: #3b1818 !important; /* Deep Crimson Maroon */
+                color: #fca5a5 !important;
                 text-decoration: line-through;
-                padding: 2px 4px;
-                border-radius: 3px;
+                padding: 1px 3px;
+                border-bottom: 1px solid #f87171;
             }
-            /* Delta Summary Cards in Sidebar */
-            .summary-card {
-                background-color: #1e293b;
-                border-left: 4px solid #d4af37;
+            
+            /* Minimalist Delta Side Cards */
+            .delta-meta-card {
+                background-color: #161616;
+                border-left: 1px solid #d4af37;
                 padding: 1rem;
-                margin-bottom: 0.5rem;
-                border-radius: 0 4px 4px 0;
+                margin-bottom: 1rem;
+                font-size: 13px;
+                color: #a3a3a3;
+                line-height: 1.5;
             }
+            .delta-meta-title {
+                font-family: 'Cinzel', serif;
+                color: #ffffff;
+                font-size: 12px;
+                margin-bottom: 0.25rem;
+                letter-spacing: 1px;
+            }
+            
+            /* Suppress system visuals */
+            .stCheckbox { color: #ffffff; }
         </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# BLOCK 3: DOCUMENT PARSING ENGINE
+# BLOCK 3: PURE DETERMINISTIC DOCUMENT PARSING
 # ==========================================
-# [DIRECTIVE: Pure deterministic text extraction. No ML/LLM models.]
 def parse_pdf(file_bytes):
-    # [DIRECTIVE: Load PDF bytes via PyMuPDF]
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     paragraphs = []
-    # [DIRECTIVE: Iterate through pages and extract blocks to maintain paragraph structure]
     for page in doc:
         blocks = page.get_text("blocks")
         for b in blocks:
             text = b[4].strip()
             if text:
-                paragraphs.append(text)
+                # Normalize line breaks within a structural block
+                text_clean = " ".join(text.split())
+                paragraphs.append(text_clean)
     return paragraphs
 
 def parse_docx(file_bytes):
-    # [DIRECTIVE: Load DOCX bytes via python-docx]
     doc = Document(io.BytesIO(file_bytes))
     paragraphs = []
-    # [DIRECTIVE: Append non-empty paragraph strings to list]
     for p in doc.paragraphs:
         if p.text.strip():
-            paragraphs.append(p.text.strip())
+            text_clean = " ".join(p.text.split())
+            paragraphs.append(text_clean)
     return paragraphs
 
 def process_uploaded_files(uploaded_files):
-    # [DIRECTIVE: Detect file type and route to appropriate parser]
     for file in uploaded_files:
         if file.name not in st.session_state.uploaded_files_data:
             bytes_data = file.read()
@@ -147,41 +183,65 @@ def process_uploaded_files(uploaded_files):
                 text_list = parse_docx(bytes_data)
             else:
                 continue
-            
-            # [DIRECTIVE: Store parsed lists in session state mapped by filename]
             st.session_state.uploaded_files_data[file.name] = text_list
-            # [DIRECTIVE: Auto-append new files to the staging order tracker]
             if file.name not in st.session_state.file_order:
                 st.session_state.file_order.append(file.name)
-                # Default role assignment
                 st.session_state.file_roles[file.name] = "v1: Baseline"
 
 # ==========================================
-# BLOCK 4: STATE MUTATION CALLBACKS
+# BLOCK 4: REVISION STRUCTURAL MUTATIONS
 # ==========================================
-# [DIRECTIVE: Handle array shifting for Phase 1 Move Up/Down buttons]
-def move_up(idx):
-    if idx > 0:
-        # [DIRECTIVE: Swap current item with the one above it in the order array]
-        st.session_state.file_order[idx], st.session_state.file_order[idx-1] = \
-            st.session_state.file_order[idx-1], st.session_state.file_order[idx]
+def shift_up(index):
+    if index > 0:
+        st.session_state.file_order[index], st.session_state.file_order[index-1] = \
+            st.session_state.file_order[index-1], st.session_state.file_order[index]
 
-def move_down(idx):
-    if idx < len(st.session_state.file_order) - 1:
-        # [DIRECTIVE: Swap current item with the one below it in the order array]
-        st.session_state.file_order[idx], st.session_state.file_order[idx+1] = \
-            st.session_state.file_order[idx+1], st.session_state.file_order[idx]
+def shift_down(index):
+    if index < len(st.session_state.file_order) - 1:
+        st.session_state.file_order[index], st.session_state.file_order[index+1] = \
+            st.session_state.file_order[index+1], st.session_state.file_order[index]
 
 # ==========================================
-# BLOCK 5: ALGORITHMIC TEXT DIFFING
+# BLOCK 5: DESCRIPTIVE ANALYSIS ENGINE
 # ==========================================
-def compute_inline_diff(text1, text2):
-    # [DIRECTIVE: Compare two strings word-by-word to find micro-edits]
+def isolate_clause_title(text):
+    # Extracts introductory identifiers like "1. PREMISES" or "Section 3"
+    match = re.match(r'^([A-Za-z0-9\.\s]+(?:\b[A-Z]{2,}\b|\bRent\b|\bTerm\b|\bDeposit\b|\bUse\b)))', text)
+    if match:
+        return match.group(1).strip()
+    words = text.split()
+    return " ".join(words[:3]) if len(words) >= 3 else "Clause Block"
+
+def generate_descriptive_diff(text1, text2, clause_name):
+    # Generates exact contextual text trace transformations
+    matcher = difflib.SequenceMatcher(None, text1.split(), text2.split())
+    changes = []
+    
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == 'replace':
+            old_words = " ".join(text1.split()[i1:i2])
+            new_words = " ".join(text2.split()[j1:j2])
+            # Keep trace window brief and functional
+            if len(old_words) < 40 and len(new_words) < 40:
+                changes.append(f"Changed '{old_words}' to '{new_words}'")
+            else:
+                changes.append(f"Terms modified within segment execution")
+        elif tag == 'delete':
+            deleted_words = " ".join(text1.split()[i1:i2])
+            if len(deleted_words) < 40:
+                changes.append(f"Removed '{deleted_words}'")
+        elif tag == 'insert':
+            inserted_words = " ".join(text2.split()[j1:j2])
+            if len(inserted_words) < 40:
+                changes.append(f"Inserted '{inserted_words}'")
+                
+    if changes:
+        return f"Modification in {clause_name}: " + "; ".join(changes)
+    return f"Modification in {clause_name}"
+
+def compute_word_diff_html(text1, text2):
     matcher = difflib.SequenceMatcher(None, text1.split(), text2.split())
     out1, out2 = [], []
-    delta_count = 0
-    
-    # [DIRECTIVE: Map opcodes to HTML highlight classes]
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         w1 = " ".join(text1.split()[i1:i2])
         w2 = " ".join(text2.split()[j1:j2])
@@ -189,176 +249,164 @@ def compute_inline_diff(text1, text2):
             out1.append(w1)
             out2.append(w2)
         elif tag == 'replace':
-            delta_count += 1
-            out1.append(f'<span class="highlight-del">{w1}</span>')
-            out2.append(f'<span class="highlight-add">{w2}</span>')
+            out1.append(f'<span class="del-segment">{w1}</span>')
+            out2.append(f'<span class="add-segment">{w2}</span>')
         elif tag == 'delete':
-            delta_count += 1
-            out1.append(f'<span class="highlight-del">{w1}</span>')
+            out1.append(f'<span class="del-segment">{w1}</span>')
         elif tag == 'insert':
-            delta_count += 1
-            out2.append(f'<span class="highlight-add">{w2}</span>')
-            
-    return delta_count, " ".join(out1), " ".join(out2)
+            out2.append(f'<span class="add-segment">{w2}</span>')
+    return " ".join(out1), " ".join(out2)
 
-def generate_diff_view(base_paras, counter_paras):
-    # [DIRECTIVE: Align macro-paragraphs before computing word-level diffs]
+def generate_continuous_document_flow(base_paras, counter_paras):
     matcher = difflib.SequenceMatcher(None, base_paras, counter_paras)
-    base_html_blocks = []
-    counter_html_blocks = []
-    summary_cards = []
+    base_html_collector = []
+    counter_html_collector = []
+    descriptive_summaries = []
     
-    # [DIRECTIVE: Process structural changes based on block opcodes]
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == 'equal':
             for i in range(i1, i2):
-                # No edits: render plain text inside standard white container
-                html = f'<div class="doc-container">{base_paras[i]}</div>'
-                base_html_blocks.append(html)
-                counter_html_blocks.append(html)
+                block = f'<div class="para-block">{base_paras[i]}</div>'
+                base_html_collector.append(block)
+                counter_html_collector.append(block)
                 
         elif tag == 'replace':
-            # Blocks changed: compute inline word diffs
             for i, j in zip(range(i1, i2), range(j1, j2)):
-                deltas, out1, out2 = compute_inline_diff(base_paras[i], counter_paras[j])
-                base_html_blocks.append(f'<div class="doc-container"><div class="delta-badge">[ {deltas} Deltas ]</div>{out1}</div>')
-                counter_html_blocks.append(f'<div class="doc-container"><div class="delta-badge">[ {deltas} Deltas ]</div>{out2}</div>')
-                summary_cards.append(f"Block Modification: {deltas} changes detected.")
+                clause_title = isolate_clause_title(base_paras[i])
+                desc = generate_descriptive_diff(base_paras[i], counter_paras[j], clause_title)
+                descriptive_summaries.append(desc)
+                
+                h1, h2 = compute_word_diff_html(base_paras[i], counter_paras[j])
+                base_html_collector.append(f'<div class="para-block"><span class="structural-indicator">▲ Modified</span>{h1}</div>')
+                counter_html_collector.append(f'<div class="para-block"><span class="structural-indicator">▲ Modified</span>{h2}</div>')
                 
         elif tag == 'delete':
-            # Block removed entirely in counter-offer
             for i in range(i1, i2):
-                base_html_blocks.append(f'<div class="doc-container"><div class="delta-badge">[ Block Removed ]</div><span class="highlight-del">{base_paras[i]}</span></div>')
-                counter_html_blocks.append(f'<div class="doc-container" style="opacity: 0.5;"><i>[Paragraph structurally deleted in this version]</i></div>')
-                summary_cards.append("Structural Deletion: A full paragraph was removed.")
+                clause_title = isolate_clause_title(base_paras[i])
+                descriptive_summaries.append(f"Structural Deletion: {clause_title} was removed completely.")
+                base_html_collector.append(f'<div class="para-block"><span class="structural-indicator" style="color:#f87171;">◼ Omitted Clause</span><span class="del-segment">{base_paras[i]}</span></div>')
                 
         elif tag == 'insert':
-            # Block added entirely in counter-offer
             for j in range(j1, j2):
-                base_html_blocks.append(f'<div class="doc-container" style="opacity: 0.5;"><i>[Paragraph missing in baseline]</i></div>')
-                counter_html_blocks.append(f'<div class="doc-container"><div class="delta-badge">[ Block Inserted ]</div><span class="highlight-add">{counter_paras[j]}</span></div>')
-                summary_cards.append("Structural Addition: A new paragraph was inserted.")
+                clause_title = isolate_clause_title(counter_paras[j])
+                descriptive_summaries.append(f"Structural Insertion: Introduced new provision under {clause_title}.")
+                counter_html_collector.append(f'<div class="para-block"><span class="structural-indicator" style="color:#34d399;">◆ New Provision</span><span class="add-segment">{counter_paras[j]}</span></div>')
                 
-    return base_html_blocks, counter_html_blocks, summary_cards
+    return "".join(base_html_collector), "".join(counter_html_collector), descriptive_summaries
 
 # ==========================================
-# BLOCK 6: UI PHASE 1 - STAGING VIEW
+# BLOCK 6: PHASE 1 - STAGING WORKSPACE
 # ==========================================
 def render_staging_view():
-    st.markdown("<h1>▲ DELTA | Contract Revision Tree</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #e2e8f0;'>Upload, sequence, and classify document versions to build the revision tree.</p>", unsafe_allow_html=True)
+    st.markdown('<div class="luxury-header">DELTA</div>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#737373; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Revision Tree Staging</p>', unsafe_allow_html=True)
+    st.markdown("<br/>", unsafe_allow_html=True)
     
-    # [DIRECTIVE: Native file uploader accepting specified formats]
-    uploaded_files = st.file_uploader("Ingest Contracts", type=['pdf', 'docx'], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Ingest Core Binaries", type=['pdf', 'docx'], accept_multiple_files=True, label_visibility="collapsed")
     
     if uploaded_files:
         process_uploaded_files(uploaded_files)
-        st.markdown("### Document Staging Sequence")
+        st.markdown("<br/>", unsafe_allow_html=True)
         
-        # [DIRECTIVE: Iterate through ordered files and render the interactive sorting UI]
         for idx, filename in enumerate(st.session_state.file_order):
-            col1, col2, col3, col4 = st.columns([4, 3, 1, 1])
+            col1, col2, col3, col4 = st.columns([5, 3, 1, 1])
             with col1:
-                st.write(f"📄 **{filename}**")
+                st.markdown(f'<p style="font-size:14px; padding-top:10px; color:#ffffff;">◼ {filename}</p>', unsafe_allow_html=True)
             with col2:
                 roles = ["Standard Template", "v1: Baseline", "v2: Counter", "v3: Counter", "v4: Counter"]
-                # [DIRECTIVE: Selectbox assigns semantic role to the specific document]
                 st.session_state.file_roles[filename] = st.selectbox(
-                    "Role", roles, index=roles.index(st.session_state.file_roles.get(filename, "v1: Baseline")), key=f"role_{filename}"
+                    "Classification", roles, index=roles.index(st.session_state.file_roles.get(filename, "v1: Baseline")), key=f"role_{filename}", label_visibility="collapsed"
                 )
             with col3:
-                # [DIRECTIVE: Move Up button with state mutation callback]
-                st.button("🔼", key=f"up_{filename}", on_click=move_up, args=(idx,))
+                st.button("▲", key=f"up_{filename}", on_click=shift_up, args=(idx,))
             with col4:
-                # [DIRECTIVE: Move Down button with state mutation callback]
-                st.button("🔽", key=f"down_{filename}", on_click=move_down, args=(idx,))
+                st.button("▼", key=f"down_{filename}", on_click=shift_down, args=(idx,))
                 
-        st.markdown("---")
-        # [DIRECTIVE: Primary action button transitions application to Phase 2]
-        if st.button("🚀 Process & Compare Contracts"):
+        st.markdown("<br/><br/>", unsafe_allow_html=True)
+        if st.button("Execute Core Comparison"):
             st.session_state.processing_complete = True
             st.rerun()
 
 # ==========================================
-# BLOCK 7: UI PHASE 2 & 3 - DASHBOARD & PEEK
+# BLOCK 7: PHASE 2 & 3 - SYSTEM REVIEW WORKSPACE
 # ==========================================
 def render_dashboard_view():
-    st.markdown("<h1>▲ DELTA | Workspace</h1>", unsafe_allow_html=True)
+    st.markdown('<div class="luxury-header">DELTA Workspace</div>', unsafe_allow_html=True)
+    st.markdown("<br/>", unsafe_allow_html=True)
     
-    # [DIRECTIVE: Top Timeline Controls for Version Navigation]
     ordered_files = st.session_state.file_order
     roles = [st.session_state.file_roles[f] for f in ordered_files]
     
-    st.markdown("### Version Navigation Timeline")
-    t_col1, t_col2 = st.columns(2)
+    # Minimalist Control Toolbar
+    t_col1, t_col2, t_col3 = st.columns([4, 4, 3])
     with t_col1:
-        st.session_state.current_baseline = st.selectbox("Select Baseline", range(len(ordered_files)), format_func=lambda x: f"{roles[x]} ({ordered_files[x]})")
+        st.session_state.current_baseline = st.selectbox("Baseline File", range(len(ordered_files)), format_func=lambda x: f"BASE // {roles[x]}")
     with t_col2:
-        st.session_state.current_counter = st.selectbox("Select Counter-Offer", range(len(ordered_files)), format_func=lambda x: f"{roles[x]} ({ordered_files[x]})", index=min(1, len(ordered_files)-1))
+        st.session_state.current_counter = st.selectbox("Counter File", range(len(ordered_files)), format_func=lambda x: f"CNTR // {roles[x]}", index=min(1, len(ordered_files)-1))
+    with t_col3:
+        st.markdown("<p style='font-size:11px; color:#737373; margin-bottom:5px; text-transform:uppercase;'>Vault View</p>", unsafe_allow_html=True)
+        st.session_state.peek_template = st.checkbox("Peek Template", value=st.session_state.peek_template)
         
-    # [DIRECTIVE: Toggle switch for Phase 3 Split-Pane Peek Window]
-    st.session_state.peek_template = st.checkbox("👁️ Peek Standard Template", value=st.session_state.peek_template)
-    
-    # [DIRECTIVE: Phase 3 Sidebar Logic - Render Standard Template if toggled]
+    # Phase 3 Sidebar Integration
     if st.session_state.peek_template:
         with st.sidebar:
-            st.markdown("### 👁️ Standard Template Vault")
+            st.markdown('<div class="luxury-header" style="font-size:16px;">Vault View</div>', unsafe_allow_html=True)
             template_file = next((f for f in ordered_files if "Standard Template" in st.session_state.file_roles[f]), None)
             if template_file:
-                st.markdown(f"**Viewing:** {template_file}")
-                # Render raw template text inside white containers
-                for p in st.session_state.uploaded_files_data[template_file]:
-                    st.markdown(f'<div class="doc-container" style="font-size: 12px;">{p}</div>', unsafe_allow_html=True)
+                st.markdown(f'<p style="color:#737373; font-size:11px;">Target: {template_file}</p>', unsafe_allow_html=True)
+                template_paras = st.session_state.uploaded_files_data[template_file]
+                t_flow = "".join([f'<div class="para-block" style="font-size:12px; color:#a3a3a3;">{p}</div>' for p in template_paras])
+                st.markdown(f'<div class="document-canvas" style="padding:1.5rem; min-height:auto;">{t_flow}</div>', unsafe_allow_html=True)
             else:
-                st.warning("No document tagged as 'Standard Template' in staging.")
+                st.markdown('<p style="color:#737373; font-size:12px;">Standard Template reference missing in staging execution tree.</p>', unsafe_allow_html=True)
 
-    # [DIRECTIVE: Phase 2 Main Reviewer Dashboard (3-Column Grid)]
-    st.markdown("---")
+    st.markdown("<br/>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([4, 4, 3])
     
-    # Fetch text arrays for selected versions
     base_file = ordered_files[st.session_state.current_baseline]
     counter_file = ordered_files[st.session_state.current_counter]
-    base_text = st.session_state.uploaded_files_data[base_file]
-    counter_text = st.session_state.uploaded_files_data[counter_file]
     
-    # Run algorithms
-    base_blocks, counter_blocks, summaries = generate_diff_view(base_text, counter_text)
+    # Process modifications
+    base_html_flow, counter_html_flow, summaries = generate_continuous_document_flow(
+        st.session_state.uploaded_files_data[base_file],
+        st.session_state.uploaded_files_data[counter_file]
+    )
     
-    # [DIRECTIVE: Render Column 1 (Baseline)]
+    # Render Column 1: Baseline Document
     with col1:
-        st.markdown(f"#### Baseline: {roles[st.session_state.current_baseline]}")
-        for html_block in base_blocks:
-            st.markdown(html_block, unsafe_allow_html=True)
-            
-    # [DIRECTIVE: Render Column 2 (Counter-Offer)]
+        st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#737373; letter-spacing:1px;'>{roles[st.session_state.current_baseline]}</p>", unsafe_allow_html=True)
+        st.markdown(f'<div class="document-canvas">{base_html_flow}</div>', unsafe_allow_html=True)
+        
+    # Render Column 2: Counter Document
     with col2:
-        st.markdown(f"#### Counter: {roles[st.session_state.current_counter]}")
-        for html_block in counter_blocks:
-            st.markdown(html_block, unsafe_allow_html=True)
-            
-    # [DIRECTIVE: Render Column 3 (Smart Delta Sidebar)]
+        st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#737373; letter-spacing:1px;'>{roles[st.session_state.current_counter]}</p>", unsafe_allow_html=True)
+        st.markdown(f'<div class="document-canvas">{counter_html_flow}</div>', unsafe_allow_html=True)
+        
+    # Render Column 3: Smart Delta Output Sidebar
     with col3:
-        st.markdown("#### Smart Delta Output")
-        st.markdown("<p style='color:#cbd5e1; font-size:14px;'>Aggregated block-level modifications.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:11px; text-transform:uppercase; color:#737373; letter-spacing:1px;'>Smart Delta Output</p>", unsafe_allow_html=True)
         if not summaries:
-            st.success("Documents are identical.")
+            st.markdown('<div class="delta-meta-card"><div class="delta-meta-title">Status Verified</div>Documents align identically across structural checkpoints.</div>', unsafe_allow_html=True)
         else:
             for idx, summary in enumerate(summaries):
-                st.markdown(f'<div class="summary-card"><strong>Delta {idx+1}:</strong><br/>{summary}</div>', unsafe_allow_html=True)
-        
+                st.markdown(f"""
+                    <div class="delta-meta-card">
+                        <div class="delta-meta-title">Trace Modification 0{idx+1}</div>
+                        {summary}
+                    </div>
+                """, unsafe_allow_html=True)
+                
         st.markdown("<br/>", unsafe_allow_html=True)
-        if st.button("⬅️ Return to Staging"):
+        if st.button("Reset Staging Environment"):
             st.session_state.processing_complete = False
             st.rerun()
 
 # ==========================================
-# BLOCK 8: MAIN EXECUTION THREAD
+# BLOCK 8: MAIN RUNTIME ORCHESTRATOR
 # ==========================================
-# [DIRECTIVE: Top-level orchestration. Injects CSS, then routes to appropriate view.]
 def main():
-    st.set_page_config(page_title="DELTA | Contract Reviewer", layout="wide", initial_sidebar_state="collapsed")
-    inject_custom_css()
+    st.set_page_config(page_title="DELTA", layout="wide", initial_sidebar_state="collapsed")
+    inject_premium_luxury_css()
     
     if not st.session_state.processing_complete:
         render_staging_view()
