@@ -1,7 +1,7 @@
 # ==============================================================================
 # DELTA | PREMIUM LEGAL ARCHITECTURE SUITE
 # ==============================================================================
-# VERSION: 2.2 (Seamless Microsoft Word Document Fusion Override)
+# VERSION: 3.0 (Zero-Gap Continuous MS Word Document Override)
 # DESCRIPTION: High-fidelity contract comparison framework utilizing fuzzy token
 #              alignment, SHA-256 cryptographic hashing, and a luxury dark-mode
 #              UI featuring a synchronized, continuous MS Word-style viewport.
@@ -28,29 +28,13 @@ from docx.oxml.ns import qn
 # ==============================================================================
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
-    
-    # Stores arrays of string paragraphs for each uploaded file
     st.session_state.uploaded_files_data = {}   
-    
-    # Stores SHA-256 cryptographic hashes for integrity validation
     st.session_state.uploaded_files_hashes = {} 
-    
-    # Tracks the sequential order of files as they are uploaded
     st.session_state.file_order = []           
-    
-    # Maps specific workflow roles (e.g., "v1: Baseline") to specific files
     st.session_state.file_roles = {}           
-    
-    # Flags whether the initial pipeline ingestion is finished
     st.session_state.processing_complete = False 
-    
-    # Index reference for the currently selected Baseline document
     st.session_state.current_baseline = 0      
-    
-    # Index reference for the currently selected Counterparty document
     st.session_state.current_counter = 1       
-    
-    # Defines the active routing matrix mode for document comparison
     st.session_state.comparison_mode = "Baseline vs Counter"
 
 
@@ -58,8 +42,6 @@ if 'initialized' not in st.session_state:
 # BLOCK 2: SYSTEM DESIGN SYSTEM (CSS)
 # ==============================================================================
 # Injects the custom corporate luxury CSS to override Streamlit's default theme.
-# Utilizes 'Inter' for clean body text and 'Cinzel' for premium branding.
-# NOTE: The continuous paper styling is handled via inline boundary logic in Block 8.
 # ==============================================================================
 def inject_luxury_system_css():
     """
@@ -178,7 +160,6 @@ def inject_luxury_system_css():
                 background-color: #161616;
                 border-left: 2px solid #d4af37;
                 padding: 0.8rem 1rem;
-                margin-bottom: 0.5rem;
                 border-radius: 0 4px 4px 0;
             }
             
@@ -191,24 +172,8 @@ def inject_luxury_system_css():
                 margin-bottom: 0.4rem; 
             }
             
-            /* Crypto Manifest Status Bar */
-            .crypto-banner {
-                font-family: monospace;
-                font-size: 10px;
-                background-color: #111111;
-                border: 1px solid #1a1a1a;
-                padding: 8px 14px;
-                color: #737373;
-                margin-bottom: 1.5rem;
-                border-radius: 2px;
-                line-height: 1.6;
-            }
-            
             /* Form Style Overrides */
-            div[data-baseweb="select"] { 
-                background-color: #121212 !important; 
-                border-radius: 0px !important; 
-            }
+            div[data-baseweb="select"] { background-color: #121212 !important; border-radius: 0px !important; }
             
             input {
                 border-radius: 0px !important;
@@ -225,15 +190,43 @@ def inject_luxury_system_css():
     """, unsafe_allow_html=True)
 
 
+def inject_matrix_fusion_css():
+    """
+    CRITICAL OVERRIDE: Neutralizes Streamlit's native grid gaps to allow the 
+    HTML white blocks to physically touch and fuse into one continuous document.
+    """
+    st.markdown("""
+        <style>
+            /* KILL ALL VERTICAL GAPS IN THE MAIN CONTAINER TO FUSE ROWS */
+            [data-testid="stMainBlockContainer"] > div > div[data-testid="stVerticalBlock"] {
+                gap: 0px !important;
+            }
+            
+            /* Ensures element containers don't add hidden margins */
+            [data-testid="stMainBlockContainer"] .element-container {
+                margin-bottom: 0px !important;
+                padding-bottom: 0px !important;
+            }
+            
+            /* Space out the 3rd column evaluation tools since the rows now touch */
+            .advisory-panel {
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            
+            div[data-testid="stRadio"], div[data-testid="stTextInput"] {
+                margin-bottom: 20px !important;
+                padding-right: 15px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+
 # ==============================================================================
 # BLOCK 3: ENGINE PARSING & CRYPTO HASHING
 # ==============================================================================
 
 def parse_pdf(file_bytes):
-    """
-    Parses a PDF document byte stream using PyMuPDF (fitz).
-    Iterates through pages and blocks to extract raw text, normalizing whitespace.
-    """
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     paragraphs = []
     for page_num, page in enumerate(doc):
@@ -245,10 +238,6 @@ def parse_pdf(file_bytes):
     return paragraphs
 
 def parse_docx(file_bytes):
-    """
-    Parses a Microsoft Word (.docx) document using python-docx.
-    Iterates through paragraph objects to extract text.
-    """
     doc = Document(io.BytesIO(file_bytes))
     paragraphs = []
     for p in doc.paragraphs:
@@ -257,10 +246,6 @@ def parse_docx(file_bytes):
     return paragraphs
 
 def load_staged_matrices(uploaded_files):
-    """
-    Processes all staged files from the uploader. Computes crypto hashes,
-    parses text arrays, and appends them to session state memory.
-    """
     for file in uploaded_files:
         if file.name not in st.session_state.uploaded_files_data:
             bytes_data = file.read()
@@ -284,11 +269,6 @@ def load_staged_matrices(uploaded_files):
 # BLOCK 4: FEATURE 2 - FUZZY ALIGNMENT ENGINE
 # ==============================================================================
 def compute_fuzzy_alignment_matrix(left_paras, right_paras, threshold=0.45):
-    """
-    Position-agnostic token-ratio optimization algorithm.
-    Compares two lists of paragraphs and aligns them based on token similarity,
-    allowing for structural rearrangement without breaking the comparison mapping.
-    """
     matched_right_indices = set()
     alignment_opcodes = []
     
@@ -298,9 +278,7 @@ def compute_fuzzy_alignment_matrix(left_paras, right_paras, threshold=0.45):
         lp_tokens = sorted(lp.lower().split())
         
         for j, rp in enumerate(right_paras):
-            if j in matched_right_indices:
-                continue
-                
+            if j in matched_right_indices: continue
             rp_tokens = sorted(rp.lower().split())
             ratio = difflib.SequenceMatcher(None, lp_tokens, rp_tokens).ratio()
             
@@ -330,50 +308,33 @@ def compute_fuzzy_alignment_matrix(left_paras, right_paras, threshold=0.45):
 # ==============================================================================
 
 def extract_clause_signature(text):
-    """Extracts the semantic 'name' or header of a clause for advisory labeling."""
     match = re.match(r'^([A-Za-z0-9\.\s]+(?:\b[A-Z]{2,}\b|\bRent\b|\bTerm\b|\bDeposit\b|\bUse\b))', text)
-    if match:
-        return match.group(1).strip()
+    if match: return match.group(1).strip()
     words = text.split()
     return " ".join(words[:2]) if len(words) >= 2 else "Provision Block"
 
 def generate_advisory_trace_text(text1, text2, signature):
-    """Generates human-readable summary logs of the specific modifications."""
     matcher = difflib.SequenceMatcher(None, text1.split(), text2.split())
     traces = []
-    
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == 'replace':
-            o = " ".join(text1.split()[i1:i2])
-            n = " ".join(text2.split()[j1:j2])
-            if len(o) < 30 and len(n) < 30: 
-                traces.append(f"Changed '{o}' to '{n}'")
+            o, n = " ".join(text1.split()[i1:i2]), " ".join(text2.split()[j1:j2])
+            if len(o) < 30 and len(n) < 30: traces.append(f"Changed '{o}' to '{n}'")
         elif tag == 'delete':
             d = " ".join(text1.split()[i1:i2])
-            if len(d) < 30: 
-                traces.append(f"Omitted '{d}'")
+            if len(d) < 30: traces.append(f"Omitted '{d}'")
         elif tag == 'insert':
             ins = " ".join(text2.split()[j1:j2])
-            if len(ins) < 30: 
-                traces.append(f"Injected '{ins}'")
-                
+            if len(ins) < 30: traces.append(f"Injected '{ins}'")
     return f"{signature} | " + ("; ".join(traces) if traces else "Terms modified.")
 
 def compute_token_diff_html(text1, text2):
-    """
-    Executes deep token diffing and wraps differences in styled HTML spans
-    mimicking Microsoft Word's Track Changes layout (pastel green/red).
-    """
     matcher = difflib.SequenceMatcher(None, text1.split(), text2.split())
     out1, out2 = [], []
-    
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        w1 = " ".join(text1.split()[i1:i2])
-        w2 = " ".join(text2.split()[j1:j2])
-        
+        w1, w2 = " ".join(text1.split()[i1:i2]), " ".join(text2.split()[j1:j2])
         if tag == 'equal':
-            out1.append(w1)
-            out2.append(w2)
+            out1.append(w1); out2.append(w2)
         elif tag == 'replace':
             out1.append(f'<span class="word-del-token">{w1}</span>')
             out2.append(f'<span class="word-add-token">{w2}</span>')
@@ -381,15 +342,7 @@ def compute_token_diff_html(text1, text2):
             out1.append(f'<span class="word-del-token">{w1}</span>')
         elif tag == 'insert':
             out2.append(f'<span class="word-add-token">{w2}</span>')
-            
     return " ".join(out1), " ".join(out2)
-
-def count_block_deltas(text1, text2):
-    """
-    Executes a micro-diff on paragraph tokens to count exact modifications.
-    """
-    matcher = difflib.SequenceMatcher(None, text1.split(), text2.split())
-    return sum(1 for tag, _, _, _, _ in matcher.get_opcodes() if tag != 'equal')
 
 
 # ==============================================================================
@@ -409,62 +362,44 @@ def export_landscape_docx(left_paras, right_paras, title_left, title_right, alig
     section = doc.sections[-1]
     section.orientation = WD_ORIENT.LANDSCAPE
     new_width, new_height = section.page_height, section.page_width
-    section.page_width = new_width
-    section.page_height = new_height
+    section.page_width, section.page_height = new_width, new_height
     
-    title = doc.add_paragraph()
-    title.add_run("DELTA CONTRACT ADVISORY MATRIX").bold = True
-    
-    meta = doc.add_paragraph()
-    meta.add_run(f"INTEGRITY MANIFEST LOG\nBASE SHA-256: {hash_l}\nCNTR SHA-256: {hash_r}\n").font.size = Pt(8)
+    doc.add_paragraph().add_run("DELTA CONTRACT ADVISORY MATRIX").bold = True
+    doc.add_paragraph().add_run(f"INTEGRITY MANIFEST LOG\nBASE SHA-256: {hash_l}\nCNTR SHA-256: {hash_r}\n").font.size = Pt(8)
     
     table = doc.add_table(rows=1, cols=3)
     table.style = 'Table Grid'
     hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = f"BASELINE ({title_left})"
-    hdr_cells[1].text = f"COUNTERPART ({title_right})"
-    hdr_cells[2].text = "SMART DELTA EVALUATION"
+    hdr_cells[0].text, hdr_cells[1].text, hdr_cells[2].text = f"BASELINE ({title_left})", f"COUNTERPART ({title_right})", "SMART DELTA EVALUATION"
     
     for tag, i1, _, j1, _ in alignment_opcodes:
         row = table.add_row()
         if tag == 'equal':
-            row.cells[0].text = left_paras[i1]
-            row.cells[1].text = right_paras[j1]
-            row.cells[2].text = "No variance detected."
+            row.cells[0].text, row.cells[1].text, row.cells[2].text = left_paras[i1], right_paras[j1], "No variance detected."
         elif tag == 'replace':
-            p1 = row.cells[0].paragraphs[0]
-            p2 = row.cells[1].paragraphs[0]
+            p1, p2 = row.cells[0].paragraphs[0], row.cells[1].paragraphs[0]
             m_words = difflib.SequenceMatcher(None, left_paras[i1].split(), right_paras[j1].split())
             for w_tag, w_i1, w_i2, w_j1, w_j2 in m_words.get_opcodes():
-                w1_str = " ".join(left_paras[i1].split()[w_i1:w_i2]) + " "
-                w2_str = " ".join(right_paras[j1].split()[w_j1:w_j2]) + " "
+                w1_str, w2_str = " ".join(left_paras[i1].split()[w_i1:w_i2]) + " ", " ".join(right_paras[j1].split()[w_j1:w_j2]) + " "
                 if w_tag == 'equal':
                     p1.add_run(w1_str); p2.add_run(w2_str)
                 else:
-                    r1 = p1.add_run(w1_str); set_run_background(r1, "fee2e2")
-                    r2 = p2.add_run(w2_str); set_run_background(r2, "dcfce7")
+                    set_run_background(p1.add_run(w1_str), "fee2e2")
+                    set_run_background(p2.add_run(w2_str), "dcfce7")
             
-            act_val = st.session_state.get(f"act_mod_{i1}_{j1}", "Unassigned")
-            note_val = st.session_state.get(f"note_mod_{i1}_{j1}", "")
             sig = extract_clause_signature(left_paras[i1])
             trace = generate_advisory_trace_text(left_paras[i1], right_paras[j1], sig)
-            row.cells[2].text = f"Evaluation: {trace}\nAction: {act_val}\nComments: {note_val}"
+            row.cells[2].text = f"Evaluation: {trace}\nAction: {st.session_state.get(f'act_mod_{i1}_{j1}', 'Unassigned')}\nComments: {st.session_state.get(f'note_mod_{i1}_{j1}', '')}"
             
         elif tag == 'delete':
-            r1 = row.cells[0].paragraphs[0].add_run(left_paras[i1])
-            set_run_background(r1, "fee2e2")
+            set_run_background(row.cells[0].paragraphs[0].add_run(left_paras[i1]), "fee2e2")
             row.cells[1].text = "[Clause Omitted]"
-            act_val = st.session_state.get(f"act_del_{i1}", "Unassigned")
-            note_val = st.session_state.get(f"note_del_{i1}", "")
-            row.cells[2].text = f"Evaluation: Structural Omission\nAction: {act_val}\nComments: {note_val}"
+            row.cells[2].text = f"Evaluation: Structural Omission\nAction: {st.session_state.get(f'act_del_{i1}', 'Unassigned')}\nComments: {st.session_state.get(f'note_del_{i1}', '')}"
             
         elif tag == 'insert':
             row.cells[0].text = "[Absent from Baseline Template]"
-            r2 = row.cells[1].paragraphs[0].add_run(right_paras[j1])
-            set_run_background(r2, "dcfce7")
-            act_val = st.session_state.get(f"act_ins_{j1}", "Unassigned")
-            note_val = st.session_state.get(f"note_ins_{j1}", "")
-            row.cells[2].text = f"Evaluation: Structural Insertion\nAction: {act_val}\nComments: {note_val}"
+            set_run_background(row.cells[1].paragraphs[0].add_run(right_paras[j1]), "dcfce7")
+            row.cells[2].text = f"Evaluation: Structural Insertion\nAction: {st.session_state.get(f'act_ins_{j1}', 'Unassigned')}\nComments: {st.session_state.get(f'note_ins_{j1}', '')}"
 
     bio = io.BytesIO()
     doc.save(bio)
@@ -478,14 +413,10 @@ def export_landscape_pdf(left_paras, right_paras, title_left, title_right, align
     page.insert_text(fitz.Point(36, 30), "DELTA CONTRACT REVIEW MATRIX", fontsize=12, color=(0.83, 0.68, 0.21))
     page.insert_text(fitz.Point(36, 45), f"BASE SHA-256: {hash_l} | CNTR SHA-256: {hash_r}", fontsize=7, color=(0.4, 0.4, 0.4))
     
-    y = 75; col_w = 230
-    c1_x, c2_x, c3_x = 36, 280, 524
+    y = 75; col_w = 230; c1_x, c2_x, c3_x = 36, 280, 524
     
     for tag, i1, _, j1, _ in alignment_opcodes:
-        if y > (page_h - 90):
-            page = doc.new_page(width=page_w, height=page_h)
-            y = 50
-            
+        if y > (page_h - 90): page = doc.new_page(width=page_w, height=page_h); y = 50
         if tag == 'equal':
             page.insert_textbox(fitz.Rect(c1_x, y, c1_x + col_w, y + 65), left_paras[i1], fontsize=8, color=(0.1, 0.1, 0.1))
             page.insert_textbox(fitz.Rect(c2_x, y, c2_x + col_w, y + 65), right_paras[j1], fontsize=8, color=(0.1, 0.1, 0.1))
@@ -551,6 +482,9 @@ def render_premium_landing_view():
 # ==============================================================================
 
 def render_delta_contracts_view():
+    # Inject the critical zero-gap CSS purely for the Matrix View
+    inject_matrix_fusion_css()
+    
     st.markdown('<div class="brand-title">DELTA CONTRACTS</div>', unsafe_allow_html=True)
     st.markdown("<br/>", unsafe_allow_html=True)
     
@@ -587,8 +521,6 @@ def render_delta_contracts_view():
         else:
             st.markdown('<p style="color:#525252; font-size:12px;">Standard Matrix signature absent in workspace staging array.</p>', unsafe_allow_html=True)
 
-    st.markdown("<br/>", unsafe_allow_html=True)
-
     if st.session_state.comparison_mode == "Standard vs Baseline":
         left_paras = st.session_state.uploaded_files_data[template_file] if template_file else st.session_state.uploaded_files_data[base_file]
         right_paras = st.session_state.uploaded_files_data[base_file]
@@ -606,124 +538,103 @@ def render_delta_contracts_view():
 
     alignment_opcodes = compute_fuzzy_alignment_matrix(left_paras, right_paras)
 
+    # Branded Banner with explicit bottom margin to detach from the gapless matrix below it
     st.markdown(f"""
-        <div class="crypto-banner">
+        <div class="crypto-banner" style="margin-top: 2rem; margin-bottom: 2rem;">
             VALIDATION MANIFEST LOG // LOCKED STATUS<br/>
             [BASE_SIG]: {hash_l}<br/>[CNTR_SIG]: {hash_r}
         </div>
     """, unsafe_allow_html=True)
 
     h_col1, h_col2, h_col3 = st.columns([4, 4, 3])
-    with h_col1: st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600;'>{col1_title}</p>", unsafe_allow_html=True)
-    with h_col2: st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600;'>{col2_title}</p>", unsafe_allow_html=True)
-    with h_col3: st.markdown("<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600;'>SMART DELTA EVALUATION</p>", unsafe_allow_html=True)
+    with h_col1: st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600; margin-bottom: 10px;'>{col1_title}</p>", unsafe_allow_html=True)
+    with h_col2: st.markdown(f"<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600; margin-bottom: 10px;'>{col2_title}</p>", unsafe_allow_html=True)
+    with h_col3: st.markdown("<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600; margin-bottom: 10px;'>SMART DELTA EVALUATION</p>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # NEW AESTHETIC: SEAMLESS NEGATIVE-MARGIN FUSION
+    # CONDITIONAL BOUNDARY RENDERING FOR CONTINUOUS PAPER ILLUSION
     # -------------------------------------------------------------------------
     total_ops = len(alignment_opcodes)
+    
     for idx, (tag, i1, _, j1, _) in enumerate(alignment_opcodes):
-        
-        # State boundary logic to determine if this is the start or end of the "Paper"
         is_first = (idx == 0)
         is_last = (idx == total_ops - 1)
         
-        # CORE FUSION HACK: The negative margin (-16px) causes the white backgrounds
-        # to expand into the dark Streamlit gap, physically fusing the row blocks together.
-        paper_style = """
+        # Base Foundation
+        base_paper_style = """
             background-color: #FFFFFF; 
             color: #000000; 
             font-family: 'Calibri', 'Times New Roman', serif; 
             font-size: 11pt; 
             line-height: 1.6; 
-            padding: 10px 50px; 
-            margin: -16px 0px; 
-            position: relative; 
-            z-index: 5;
+            padding: 20px 50px; 
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
         """
         
-        # Apply strict boundary limits for the Document page illusion
-        if is_first:
-            paper_style += " padding-top: 50px; border-top-left-radius: 4px; border-top-right-radius: 4px; box-shadow: 0px -10px 20px rgba(0,0,0,0.15);"
-        if is_last:
-            paper_style += " padding-bottom: 50px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; box-shadow: 0px 10px 20px rgba(0,0,0,0.15);"
+        # Layered Box Shadows to build physical paper depth safely
+        shadow_first = "box-shadow: -4px 0px 10px rgba(0,0,0,0.05), 4px 0px 10px rgba(0,0,0,0.05), 0px -10px 20px rgba(0,0,0,0.15);"
+        shadow_last = "box-shadow: -4px 0px 10px rgba(0,0,0,0.05), 4px 0px 10px rgba(0,0,0,0.05), 0px 10px 20px rgba(0,0,0,0.15);"
+        shadow_middle = "box-shadow: -4px 0px 10px rgba(0,0,0,0.05), 4px 0px 10px rgba(0,0,0,0.05);"
+        shadow_single = "box-shadow: 0px 10px 20px rgba(0,0,0,0.15);"
+        
+        # State Routing for borders and shadows
+        if is_first and is_last:
+            style = base_paper_style + f" padding-top: 50px; padding-bottom: 50px; border-radius: 4px; {shadow_single}"
+        elif is_first:
+            style = base_paper_style + f" padding-top: 50px; border-top-left-radius: 4px; border-top-right-radius: 4px; {shadow_first}"
+        elif is_last:
+            style = base_paper_style + f" padding-bottom: 50px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; {shadow_last}"
+        else:
+            style = base_paper_style + f" {shadow_middle}"
             
-        spacer_style = paper_style + " visibility: hidden;"
+        # The invisible spacer maintains column width and background color to plug gaps in added/removed blocks
+        spacer_style = style + " visibility: hidden;"
 
-        # 1. NO VARIANCE DETECTED
+        # Streamlit Injection
+        st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([4, 4, 3])
+        
         if tag == 'equal':
-            st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([4, 4, 3])
-            
-            with col1: 
-                st.markdown(f'<div style="{paper_style}">{left_paras[i1]}</div>', unsafe_allow_html=True)
-            with col2: 
-                st.markdown(f'<div style="{paper_style}">{right_paras[j1]}</div>', unsafe_allow_html=True)
-            with col3: 
-                st.write("")
+            with col1: st.markdown(f'<div style="{style}">{left_paras[i1]}</div>', unsafe_allow_html=True)
+            with col2: st.markdown(f'<div style="{style}">{right_paras[j1]}</div>', unsafe_allow_html=True)
+            with col3: st.write("")
                 
-            st.markdown('</div>', unsafe_allow_html=True)
-                
-        # 2. MODIFIED BLOCK DETECTED
         elif tag == 'replace':
             unique_id = f"mod_{i1}_{j1}"
             signature = extract_clause_signature(left_paras[i1])
             trace_detail = generate_advisory_trace_text(left_paras[i1], right_paras[j1], signature)
             h1, h2 = compute_token_diff_html(left_paras[i1], right_paras[j1])
             
-            st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([4, 4, 3])
-            
-            with col1: 
-                st.markdown(f'<div style="{paper_style}">{h1}</div>', unsafe_allow_html=True)
-            with col2: 
-                st.markdown(f'<div style="{paper_style}">{h2}</div>', unsafe_allow_html=True)
+            with col1: st.markdown(f'<div style="{style}">{h1}</div>', unsafe_allow_html=True)
+            with col2: st.markdown(f'<div style="{style}">{h2}</div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel"><div class="advisory-header">{signature}</div><p style="color:#a3a3a3; font-size:11px; margin:0;">{trace_detail}</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
                 st.text_input("Comments", key=f"note_{unique_id}", placeholder="Comments", label_visibility="collapsed")
                 
-            st.markdown('</div>', unsafe_allow_html=True)
-                
-        # 3. DELETED / DROPPED BLOCK
         elif tag == 'delete':
             unique_id = f"del_{i1}"
             signature = extract_clause_signature(left_paras[i1])
             
-            st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([4, 4, 3])
-            
-            with col1: 
-                # Renders text wrapped in the red MS Word track-changes strikethrough
-                st.markdown(f'<div style="{paper_style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
-            with col2: 
-                # Renders an invisible placeholder WITH the paper background to ensure continuous column coloring
-                st.markdown(f'<div style="{spacer_style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
+            with col1: st.markdown(f'<div style="{style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
+            with col2: st.markdown(f'<div style="{spacer_style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel" style="border-left-color:#f87171;"><div class="advisory-header">{signature}</div><p style="color:#f87171; font-size:11px; margin:0;">Omission Directive</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
                 
-            st.markdown('</div>', unsafe_allow_html=True)
-                
-        # 4. INSERTED / NEW BLOCK
         elif tag == 'insert':
             unique_id = f"ins_{j1}"
             signature = extract_clause_signature(right_paras[j1])
             
-            st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([4, 4, 3])
-            
-            with col1: 
-                # Renders an invisible placeholder WITH the paper background to ensure continuous column coloring
-                st.markdown(f'<div style="{spacer_style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
-            with col2: 
-                # Renders text wrapped in the green MS Word track-changes underline
-                st.markdown(f'<div style="{paper_style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
+            with col1: st.markdown(f'<div style="{spacer_style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
+            with col2: st.markdown(f'<div style="{style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel" style="border-left-color:#34d399;"><div class="advisory-header">{signature}</div><p style="color:#34d399; font-size:11px; margin:0;">Injected Clause Block</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
                 
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # ==========================================
     # BRANDED CONSOLIDATED EXPORT FOOTER
@@ -760,10 +671,6 @@ def render_delta_contracts_view():
 # BLOCK 9: ENTRYPOINT ORCHESTRATION
 # ==============================================================================
 def main():
-    """
-    Main orchestration loop for the Streamlit execution tree.
-    Sets wide-layout configuration and routes users based on data ingestion status.
-    """
     st.set_page_config(page_title="DELTA CONTRACTS", layout="wide", initial_sidebar_state="collapsed")
     inject_luxury_system_css()
     
