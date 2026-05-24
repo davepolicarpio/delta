@@ -13,7 +13,7 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement
-from docx.oxml.qn import qn
+from docx.oxml.ns import qn
 
 # ==========================================
 # BLOCK 1: STATE HYDRATION
