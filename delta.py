@@ -1,10 +1,10 @@
 # ==============================================================================
 # DELTA | PREMIUM LEGAL ARCHITECTURE SUITE
 # ==============================================================================
-# VERSION: 2.1 (Floating White Paper & Microsoft Word Track-Changes UI)
+# VERSION: 2.2 (Seamless Microsoft Word Document Fusion Override)
 # DESCRIPTION: High-fidelity contract comparison framework utilizing fuzzy token
 #              alignment, SHA-256 cryptographic hashing, and a luxury dark-mode
-#              UI featuring a synchronized MS Word-style comparative viewport.
+#              UI featuring a synchronized, continuous MS Word-style viewport.
 # ==============================================================================
 
 import streamlit as st
@@ -59,7 +59,7 @@ if 'initialized' not in st.session_state:
 # ==============================================================================
 # Injects the custom corporate luxury CSS to override Streamlit's default theme.
 # Utilizes 'Inter' for clean body text and 'Cinzel' for premium branding.
-# NOTE: Document paper styling is applied dynamically via inline CSS in Block 8.
+# NOTE: The continuous paper styling is handled via inline boundary logic in Block 8.
 # ==============================================================================
 def inject_luxury_system_css():
     """
@@ -151,7 +151,7 @@ def inject_luxury_system_css():
             
             /* Row alignment padding without clunky visual boxes */
             .aligned-matrix-row {
-                padding: 0.8rem 0;
+                padding: 0;
                 margin: 0;
                 background: transparent;
                 display: block;
@@ -395,7 +395,6 @@ def count_block_deltas(text1, text2):
 # ==============================================================================
 # BLOCK 6: HIGH-FIDELITY COMPLIANCE EXPORTERS (DOCX & PDF)
 # ==============================================================================
-# (Exporter logic remains preserved as-is per requirements)
 
 def set_run_background(run, color_hex):
     rPr = run._r.get_or_add_rPr()
@@ -548,7 +547,7 @@ def render_premium_landing_view():
 
 
 # ==============================================================================
-# BLOCK 8: UI PHASE 2 - SYNCHRONIZED "WHITE PAPER" REVIEW MATRIX
+# BLOCK 8: UI PHASE 2 - SYNCHRONIZED "SEAMLESS WHITE PAPER" REVIEW MATRIX
 # ==============================================================================
 
 def render_delta_contracts_view():
@@ -620,37 +619,46 @@ def render_delta_contracts_view():
     with h_col3: st.markdown("<p style='font-size:11px; text-transform:uppercase; color:#525252; font-weight:600;'>SMART DELTA EVALUATION</p>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # NEW AESTHETIC: FLOATING WHITE PAPER STYLE INJECTION
+    # NEW AESTHETIC: SEAMLESS NEGATIVE-MARGIN FUSION
     # -------------------------------------------------------------------------
-    # Enforces 8.5x11 MS Word styling per block: #FFFFFF background, #000000 text, 
-    # Times New Roman serif typography, aggressive padding, and a drop shadow.
-    PAPER_STYLE = """
-        background-color: #FFFFFF; 
-        color: #000000; 
-        font-family: 'Calibri', 'Times New Roman', serif; 
-        font-size: 11pt; 
-        line-height: 1.6; 
-        padding: 40px 50px; 
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.15); 
-        border-radius: 4px; 
-        margin-bottom: 20px;
-        position: relative;
-    """
-    
-    # Hidden spacer used specifically to enforce parallel height constraint for empty blocks
-    SPACER_STYLE = PAPER_STYLE + " visibility: hidden;"
-
-    for tag, i1, _, j1, _ in alignment_opcodes:
+    total_ops = len(alignment_opcodes)
+    for idx, (tag, i1, _, j1, _) in enumerate(alignment_opcodes):
         
+        # State boundary logic to determine if this is the start or end of the "Paper"
+        is_first = (idx == 0)
+        is_last = (idx == total_ops - 1)
+        
+        # CORE FUSION HACK: The negative margin (-16px) causes the white backgrounds
+        # to expand into the dark Streamlit gap, physically fusing the row blocks together.
+        paper_style = """
+            background-color: #FFFFFF; 
+            color: #000000; 
+            font-family: 'Calibri', 'Times New Roman', serif; 
+            font-size: 11pt; 
+            line-height: 1.6; 
+            padding: 10px 50px; 
+            margin: -16px 0px; 
+            position: relative; 
+            z-index: 5;
+        """
+        
+        # Apply strict boundary limits for the Document page illusion
+        if is_first:
+            paper_style += " padding-top: 50px; border-top-left-radius: 4px; border-top-right-radius: 4px; box-shadow: 0px -10px 20px rgba(0,0,0,0.15);"
+        if is_last:
+            paper_style += " padding-bottom: 50px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; box-shadow: 0px 10px 20px rgba(0,0,0,0.15);"
+            
+        spacer_style = paper_style + " visibility: hidden;"
+
         # 1. NO VARIANCE DETECTED
         if tag == 'equal':
             st.markdown('<div class="aligned-matrix-row">', unsafe_allow_html=True)
             col1, col2, col3 = st.columns([4, 4, 3])
             
             with col1: 
-                st.markdown(f'<div style="{PAPER_STYLE}">{left_paras[i1]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}">{left_paras[i1]}</div>', unsafe_allow_html=True)
             with col2: 
-                st.markdown(f'<div style="{PAPER_STYLE}">{right_paras[j1]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}">{right_paras[j1]}</div>', unsafe_allow_html=True)
             with col3: 
                 st.write("")
                 
@@ -667,9 +675,9 @@ def render_delta_contracts_view():
             col1, col2, col3 = st.columns([4, 4, 3])
             
             with col1: 
-                st.markdown(f'<div style="{PAPER_STYLE}">{h1}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}">{h1}</div>', unsafe_allow_html=True)
             with col2: 
-                st.markdown(f'<div style="{PAPER_STYLE}">{h2}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}">{h2}</div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel"><div class="advisory-header">{signature}</div><p style="color:#a3a3a3; font-size:11px; margin:0;">{trace_detail}</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
@@ -687,10 +695,10 @@ def render_delta_contracts_view():
             
             with col1: 
                 # Renders text wrapped in the red MS Word track-changes strikethrough
-                st.markdown(f'<div style="{PAPER_STYLE}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
             with col2: 
-                # Renders an invisible placeholder matching padding/shadows to enforce horizontal sync
-                st.markdown(f'<div style="{SPACER_STYLE}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
+                # Renders an invisible placeholder WITH the paper background to ensure continuous column coloring
+                st.markdown(f'<div style="{spacer_style}"><span class="word-del-token">{left_paras[i1]}</span></div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel" style="border-left-color:#f87171;"><div class="advisory-header">{signature}</div><p style="color:#f87171; font-size:11px; margin:0;">Omission Directive</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
@@ -706,11 +714,11 @@ def render_delta_contracts_view():
             col1, col2, col3 = st.columns([4, 4, 3])
             
             with col1: 
-                # Renders an invisible placeholder matching padding/shadows to enforce horizontal sync
-                st.markdown(f'<div style="{SPACER_STYLE}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
+                # Renders an invisible placeholder WITH the paper background to ensure continuous column coloring
+                st.markdown(f'<div style="{spacer_style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
             with col2: 
                 # Renders text wrapped in the green MS Word track-changes underline
-                st.markdown(f'<div style="{PAPER_STYLE}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{paper_style}"><span class="word-add-token">{right_paras[j1]}</span></div>', unsafe_allow_html=True)
             with col3:
                 st.markdown(f'<div class="advisory-panel" style="border-left-color:#34d399;"><div class="advisory-header">{signature}</div><p style="color:#34d399; font-size:11px; margin:0;">Injected Clause Block</p></div>', unsafe_allow_html=True)
                 st.radio("Action Protocol", ["✓", "⚠", "⇄", "✕"], key=f"act_{unique_id}", horizontal=True, label_visibility="collapsed", index=None)
