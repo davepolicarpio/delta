@@ -205,8 +205,8 @@ def shift_down(index):
 # BLOCK 5: DESCRIPTIVE ANALYSIS ENGINE
 # ==========================================
 def isolate_clause_title(text):
-    # Extracts introductory identifiers like "1. PREMISES" or "Section 3"
-    match = re.match(r'^([A-Za-z0-9\.\s]+(?:\b[A-Z]{2,}\b|\bRent\b|\bTerm\b|\bDeposit\b|\bUse\b)))', text)
+    # [FIXED]: Correctly balanced regex capture groups to avoid re.PatternError
+    match = re.match(r'^([A-Za-z0-9\.\s]+(?:\b[A-Z]{2,}\b|\bRent\b|\bTerm\b|\bDeposit\b|\bUse\b))', text)
     if match:
         return match.group(1).strip()
     words = text.split()
